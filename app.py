@@ -5,6 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import random
 import string
+import time
 
 def generate_random_string(length):
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
@@ -24,6 +25,53 @@ def find_signup_button(driver):
         try:
             element = wait.until(EC.element_to_be_clickable(selector))
             return element
+        except Exception:
+            continue
+    
+    return None
+
+def find_email_field(driver):
+    selectors = [
+        (By.CSS_SELECTOR, "input[type='email']"),
+        (By.CSS_SELECTOR, "input[name='email']"),
+        (By.CSS_SELECTOR, "input[id='email']"),
+        (By.XPATH, "//input[contains(@placeholder, 'email')]"),
+    ]
+    
+    for selector in selectors:
+        try:
+            return driver.find_element(*selector)
+        except Exception:
+            continue
+    
+    return None
+
+def find_password_field(driver):
+    selectors = [
+        (By.CSS_SELECTOR, "input[type='password']"),
+        (By.CSS_SELECTOR, "input[name='password']"),
+        (By.CSS_SELECTOR, "input[id='password']"),
+        (By.XPATH, "//input[contains(@placeholder, 'pass')]"),
+    ]
+    
+    for selector in selectors:
+        try:
+            return driver.find_element(*selector)
+        except Exception:
+            continue
+    
+    return None
+
+def find_name_field(driver):
+    selectors = [
+        (By.CSS_SELECTOR, "input[name='name']"),
+        (By.CSS_SELECTOR, "input[id='name']"),
+        (By.XPATH, "//input[contains(@placeholder, 'name')]"),
+    ]
+    
+    for selector in selectors:
+        try:
+            return driver.find_element(*selector)
         except Exception:
             continue
     
@@ -63,13 +111,19 @@ def create_account(driver, website_url, username_prefix):
         random_suffix = generate_random_string(8)
         full_username = f"{username_prefix}{random_suffix}"
         
-        email_field = driver.find_element(By.CSS_SELECTOR, "input[type='email']")
-        password_field = driver.find_element(By.CSS_SELECTOR, "input[type='password']")
-        name_field = driver.find_element(By.CSS_SELECTOR, "input[name='name'], input[id='name']")
+        email_field = find_email_field(driver)
+        password_field = find_password_field(driver)
+        name_field = find_name_field(driver)
+        
+        if not email_field or not password_field:
+            print("Email or password field not found.")
+            return False
         
         email_field.send_keys(f"{full_username}@tempmail.com")
         password_field.send_keys(generate_random_string(12))
-        name_field.send_keys(full_username)
+        
+        if name_field:
+            name_field.send_keys(full_username)
         
         signup_button.click()
         
@@ -94,6 +148,7 @@ def main():
     
     website_url = config.get('website', '')
     username_prefix = config.get('name', '')
+    account_count = config.get('count', 10)
     
     if not website_url or not username_prefix:
         print("Error: Missing website URL or name in config.json.")
@@ -107,11 +162,13 @@ def main():
     driver = webdriver.Chrome(options=options)
     
     try:
-        for _ in range(10):
+        for i in range(account_count):
             if create_account(driver, website_url, username_prefix):
                 print("Account created successfully.")
             else:
                 print("Failed to create account.")
+            
+            time.sleep(1)
     finally:
         driver.quit()
 
