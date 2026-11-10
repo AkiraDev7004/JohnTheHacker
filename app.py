@@ -86,7 +86,7 @@ def click_all_buttons(driver):
             pass
 
 def fill_date_fields(driver):
-    date_inputs = driver.find_elements(By.CSS_SELECTOR, "input[type='date'], input[placeholder*='date']")
+    date_inputs = driver.find_elements(By.CSS_SELECTOR, "input[type='date'], input[placeholder*='datum']")
     for input_elem in date_inputs:
         try:
             input_elem.send_keys("09.09.1999")
@@ -102,8 +102,10 @@ def handle_alerts(driver):
 def create_account(driver, website_url, username_prefix):
     driver.get(website_url)
     
-    signup_button = find_signup_button(driver)
-    if not signup_button:
+    wait = WebDriverWait(driver, 15)
+    
+    register_button = find_signup_button(driver)
+    if not register_button:
         print("Signup button not found.")
         return False
     
@@ -125,7 +127,7 @@ def create_account(driver, website_url, username_prefix):
         if name_field:
             name_field.send_keys(full_username)
         
-        signup_button.click()
+        register_button.click()
         
         wait = WebDriverWait(driver, 5)
         handle_alerts(driver)
